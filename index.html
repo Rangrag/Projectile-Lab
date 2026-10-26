@@ -1,0 +1,1067 @@
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#101729">
+<title>Projectile Lab | ห้องทดลองโพรเจกไทล์ 3D</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --bg: #0b1020;
+  --panel: rgba(24, 33, 55, .88);
+  --panel2: #17223a;
+  --border: rgba(160, 185, 230, .14);
+  --text: #f0f5ff;
+  --muted: #91a2c1;
+  --cyan: #59e1e8;
+  --blue: #718bff;
+  --purple: #bd91ff;
+  --green: #65e5b0;
+  --orange: #ffbb70;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse at 12% 0%, rgba(77, 107, 220, .16), transparent 38%),
+    radial-gradient(ellipse at 100% 80%, rgba(49, 194, 203, .08), transparent 38%),
+    var(--bg);
+  color: var(--text);
+  font-family: 'IBM Plex Sans Thai', sans-serif;
+}
+button, input { font: inherit; }
+button { cursor: pointer; }
+.app { max-width: 1600px; margin: auto; padding: 22px; }
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+.brand { display: flex; gap: 13px; align-items: center; }
+.brand-icon {
+  width: 48px; height: 48px; border-radius: 15px;
+  display: grid; place-items: center;
+  background: linear-gradient(135deg, #627dff, #4edbd8);
+  color: #071126; font-size: 24px; font-weight: 800;
+  box-shadow: 0 8px 30px #526dff40;
+}
+.brand h1 { font-size: 21px; margin: 0; letter-spacing: -.4px; }
+.brand p { color: var(--muted); font-size: 12px; margin: 3px 0 0; }
+.header-right { display: flex; align-items: center; gap: 10px; }
+.status {
+  display: flex; gap: 8px; align-items: center;
+  padding: 9px 13px; border: 1px solid var(--border);
+  background: #ffffff07; border-radius: 30px;
+  font-size: 12px; color: #b9c8e5;
+}
+.status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+.btn {
+  border: 1px solid var(--border); color: var(--text);
+  background: #ffffff08; padding: 10px 15px; border-radius: 11px;
+  transition: .2s;
+}
+.btn:hover { background: #ffffff15; transform: translateY(-1px); }
+.btn.primary {
+  border: none; color: #091426; font-weight: 700;
+  background: linear-gradient(110deg, var(--cyan), #8cbdff);
+}
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(330px, .88fr);
+  gap: 19px; align-items: start;
+}
+.left, .right { min-width: 0; display: grid; gap: 18px; }
+.panel {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 19px; overflow: hidden;
+  box-shadow: 0 15px 50px #00000012;
+  backdrop-filter: blur(18px);
+}
+.panel-heading {
+  padding: 17px 19px; display: flex; align-items: center;
+  justify-content: space-between; gap: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.panel-heading h2 { font-size: 14px; margin: 0; font-weight: 600; }
+.eyebrow { font: 10px 'Inter', sans-serif; color: var(--muted); letter-spacing: 1.3px; }
+.scene-wrap { position: relative; height: clamp(350px, 48vw, 590px); min-height: 350px; background: #111b32; }
+#scene { position: absolute; inset: 0; }
+#scene canvas { display: block; width: 100%; height: 100%; }
+.scene-top {
+  position: absolute; z-index: 2; top: 15px; left: 15px; right: 15px;
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;
+  pointer-events: none;
+}
+.scene-chip {
+  background: #0b1428c9; border: 1px solid #ffffff18;
+  padding: 9px 12px; border-radius: 12px; backdrop-filter: blur(12px);
+  font-size: 11px; color: #cfddf5;
+}
+.scene-chip strong { display: block; font: 700 13px 'Inter', sans-serif; color: white; margin-top: 3px; }
+.scene-bottom {
+  position: absolute; z-index: 2; bottom: 14px; left: 15px; right: 15px;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  pointer-events: none;
+}
+.scene-bottom .scene-chip { font-size: 10px; }
+.scene-bottom button { pointer-events: auto; }
+.camera-controls { display: flex; gap: 6px; }
+.camera-controls button { padding: 7px 10px; font-size: 11px; }
+.legend {
+  display: flex; flex-wrap: wrap; gap: 15px; padding: 13px 18px;
+  color: var(--muted); font-size: 11px; border-top: 1px solid var(--border);
+}
+.legend span { display: inline-flex; align-items: center; gap: 7px; }
+.legend i { width: 15px; height: 3px; border-radius: 5px; display: inline-block; }
+.stats {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px;
+}
+.stat {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 15px; padding: 15px 13px; min-width: 0;
+}
+.stat-label { color: var(--muted); font-size: 11px; }
+.stat-value { font: 700 clamp(17px, 2vw, 25px) 'Inter', sans-serif; margin: 11px 0 5px; overflow-wrap: anywhere; }
+.stat-unit { font-size: 11px; color: var(--muted); }
+.stat-foot { font-size: 10px; margin-top: 10px; color: var(--cyan); }
+.section-body { padding: 18px; }
+.control { margin-bottom: 22px; }
+.control:last-child { margin-bottom: 0; }
+.control-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.control-name { font-size: 12px; color: #d9e4fa; }
+.control-value { font: 600 13px 'Inter', sans-serif; color: var(--cyan); }
+.control-desc { color: var(--muted); font-size: 10px; margin-top: 7px; line-height: 1.6; }
+input[type=range] {
+  width: 100%; accent-color: var(--cyan); cursor: pointer;
+}
+.range-labels { display: flex; justify-content: space-between; font: 10px 'Inter', sans-serif; color: #7082a3; }
+.divider { height: 1px; background: var(--border); margin: 18px 0; }
+.toggle-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 13px 0; }
+.toggle-row label { font-size: 12px; color: #d0dbef; }
+.toggle-row input { accent-color: var(--cyan); width: 16px; height: 16px; }
+.action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 20px; }
+.action-row .btn { font-size: 12px; padding: 12px 8px; }
+.progress-track { height: 5px; border-radius: 10px; background: #ffffff0d; overflow: hidden; margin-top: 13px; }
+.progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--blue), var(--cyan)); transition: width .08s linear; }
+.playback-label { font-size: 10px; color: var(--muted); display: flex; justify-content: space-between; margin-top: 8px; }
+.formula {
+  border-radius: 13px; padding: 14px; background: #0d162a;
+  border: 1px solid var(--border); margin-bottom: 10px;
+}
+.formula:last-child { margin-bottom: 0; }
+.formula-title { font-size: 11px; color: var(--muted); margin-bottom: 8px; }
+.equation { font: 500 13px 'Inter', sans-serif; color: #b9c8ff; overflow-wrap: anywhere; line-height: 1.8; }
+.formula-note { font-size: 11px; line-height: 1.7; color: #b2c0d9; margin-top: 7px; }
+.distance-status { font-size: 11px; line-height: 1.8; margin-top: 10px; color: var(--green); }
+.hotspots { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; }
+.hotspot {
+  border: 1px solid var(--border); border-radius: 12px; background: #ffffff05;
+  color: #cbd8f0; padding: 12px 6px; text-align: center; font-size: 11px;
+  transition: .2s;
+}
+.hotspot b { display: block; font-size: 19px; margin-bottom: 5px; }
+.hotspot:hover, .hotspot.active { background: #6f8aff1c; border-color: #7e9bff70; }
+.info-card {
+  border: 1px solid #7893ff45; border-radius: 14px;
+  background: linear-gradient(135deg, #728bff14, #56e2e80b);
+  padding: 16px; animation: enter .25s ease;
+}
+.info-card h3 { margin: 0 0 8px; font-size: 14px; }
+.info-card p { margin: 0; font-size: 12px; line-height: 1.9; color: #bac9e3; }
+.info-card .mini-equation { font: 13px 'Inter', sans-serif; color: var(--cyan); margin-top: 10px; }
+@keyframes enter { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+.footer-note { text-align: center; padding: 22px 5px 5px; color: #647696; font-size: 10px; line-height: 1.8; }
+@media(max-width: 1000px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .right { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+  .right .controls-panel { grid-row: span 2; }
+  .scene-wrap { height: 480px; }
+}
+@media(max-width: 620px) {
+  .app { padding: 12px; }
+  header { margin-bottom: 15px; }
+  .brand h1 { font-size: 17px; }
+  .brand-icon { width: 42px; height: 42px; }
+  .header-right .status { display: none; }
+  .scene-wrap { height: 390px; min-height: 330px; }
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .right { grid-template-columns: minmax(0, 1fr); }
+  .right .controls-panel { grid-row: auto; }
+  .panel-heading { padding: 14px; }
+  .section-body { padding: 15px; }
+  .scene-bottom { align-items: flex-end; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <div class="brand-icon">↗</div>
+      <div>
+        <h1>Projectile Lab <span style="color:var(--cyan)">3D</span></h1>
+        <p>ห้องทดลองการเคลื่อนที่แบบโพรเจกไทล์</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="status"><span class="status-dot"></span> PHYSICS SIMULATION</div>
+      <button class="btn" id="resetCamera">รีเซ็ตมุมกล้อง</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="left">
+      <div class="panel">
+        <div class="panel-heading">
+          <div>
+            <div class="eyebrow">INTERACTIVE 3D ENVIRONMENT</div>
+            <h2 style="margin-top:5px">สนามทดลองวิถีการเคลื่อนที่</h2>
+          </div>
+          <div class="status"><span class="status-dot"></span> <span id="simStatus">พร้อมทดลอง</span></div>
+        </div>
+        <div class="scene-wrap">
+          <div id="scene"></div>
+          <div class="scene-top">
+            <div class="scene-chip">INITIAL VELOCITY<strong id="sceneVelocity">20.0 m/s</strong></div>
+            <div class="scene-chip" style="text-align:right">LAUNCH ANGLE<strong id="sceneAngle">45°</strong></div>
+          </div>
+          <div class="scene-bottom">
+            <div class="scene-chip">ลากเมาส์เพื่อหมุน · ลูกกลิ้งเพื่อซูม · คลิกขวาเพื่อแพน</div>
+            <div class="camera-controls">
+              <button class="btn" id="viewSide">มุมด้านข้าง</button>
+              <button class="btn" id="viewTop">มุมด้านบน</button>
+            </div>
+          </div>
+        </div>
+        <div class="legend">
+          <span><i style="background:#5ce2e8"></i> วิถีการเคลื่อนที่</span>
+          <span><i style="background:#ffbd75"></i> เวกเตอร์ความเร็ว</span>
+          <span><i style="background:#bd91ff"></i> ตำแหน่งเป้าหมาย</span>
+          <span><i style="background:#65e5b0"></i> จุดสูงสุด</span>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-label">ระยะทางแนวราบสูงสุด</div>
+          <div class="stat-value" id="rangeValue">40.77</div>
+          <div class="stat-unit">เมตร (m)</div>
+          <div class="stat-foot">Horizontal range</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">ความสูงสูงสุด</div>
+          <div class="stat-value" id="heightValue">10.19</div>
+          <div class="stat-unit">เมตร (m)</div>
+          <div class="stat-foot">Maximum height</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">เวลาในอากาศ</div>
+          <div class="stat-value" id="timeValue">2.89</div>
+          <div class="stat-unit">วินาที (s)</div>
+          <div class="stat-foot">Time of flight</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">ความเร็วขณะตก</div>
+          <div class="stat-value" id="finalSpeedValue">20.00</div>
+          <div class="stat-unit">เมตร/วินาที (m/s)</div>
+          <div class="stat-foot">Final speed · ไม่มีแรงต้าน</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-heading">
+          <h2>สำรวจหลักการทางฟิสิกส์</h2>
+          <span class="eyebrow">LEARNING HOTSPOTS</span>
+        </div>
+        <div class="section-body">
+          <div class="hotspots">
+            <button class="hotspot active" data-info="velocity"><b style="color:var(--orange)">↗</b>ความเร็วต้น</button>
+            <button class="hotspot" data-info="gravity"><b style="color:var(--green)">↓</b>แรงโน้มถ่วง</button>
+            <button class="hotspot" data-info="trajectory"><b style="color:var(--cyan)">⌁</b>วิถีโค้ง</button>
+          </div>
+          <div class="info-card" id="infoCard" style="margin-top:13px">
+            <h3>ความเร็วต้น (Initial Velocity)</h3>
+            <p>วัตถุถูกปล่อยด้วยความเร็วต้น v₀ ซึ่งแยกเป็นองค์ประกอบแนวราบและแนวดิ่ง ความเร็วทั้งสององค์ประกอบมีบทบาทต่อวิถีของวัตถุ</p>
+            <div class="mini-equation">vₓ = v₀ cos θ &nbsp; · &nbsp; vᵧ = v₀ sin θ</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="right">
+      <div class="panel controls-panel">
+        <div class="panel-heading">
+          <div>
+            <div class="eyebrow">EXPERIMENT CONTROLS</div>
+            <h2 style="margin-top:5px">ปรับตัวแปรการทดลอง</h2>
+          </div>
+          <span style="font-size:19px">⚙</span>
+        </div>
+        <div class="section-body">
+          <div class="control">
+            <div class="control-head">
+              <label class="control-name" for="speed">ความเร็วต้น (v₀)</label>
+              <span class="control-value" id="speedOut">20.0 m/s</span>
+            </div>
+            <input type="range" id="speed" min="5" max="40" value="20" step=".5">
+            <div class="range-labels"><span>5 m/s</span><span>40 m/s</span></div>
+            <div class="control-desc">กำหนดขนาดความเร็วของวัตถุในขณะเริ่มเคลื่อนที่</div>
+          </div>
+          <div class="control">
+            <div class="control-head">
+              <label class="control-name" for="angle">มุมยิง (θ)</label>
+              <span class="control-value" id="angleOut">45°</span>
+            </div>
+            <input type="range" id="angle" min="5" max="85" value="45" step="1">
+            <div class="range-labels"><span>5°</span><span>85°</span></div>
+            <div class="control-desc">วัดจากแนวระดับ โดยถือว่าจุดยิงและจุดตกอยู่ระดับเดียวกัน</div>
+          </div>
+          <div class="control">
+            <div class="control-head">
+              <label class="control-name" for="target">ระยะห่างเป้าหมาย</label>
+              <span class="control-value" id="targetOut">30 m</span>
+            </div>
+            <input type="range" id="target" min="5" max="100" value="30" step="1">
+            <div class="range-labels"><span>5 m</span><span>100 m</span></div>
+            <div class="control-desc">เลื่อนตำแหน่งเป้าหมายเพื่อเปรียบเทียบกับระยะตกจริงของวัตถุ</div>
+          </div>
+          <div class="control">
+            <div class="control-head">
+              <label class="control-name" for="force">แรงขว้างจำลอง (F)</label>
+              <span class="control-value" id="forceOut">20 N</span>
+            </div>
+            <input type="range" id="force" min="5" max="100" value="20" step="1">
+            <div class="range-labels"><span>5 N</span><span>100 N</span></div>
+            <div class="control-desc">แสดงแรงที่ใช้ผลักวัตถุในช่วงสั้น ๆ แบบจำลองนี้กำหนดมวล 1 kg และเวลาออกแรง 0.2 s เพื่อคำนวณการเปลี่ยนโมเมนตัมโดยประมาณ แรงนี้ไม่เปลี่ยน v₀ ที่กำหนดด้วยแถบความเร็ว</div>
+          </div>
+
+          <div class="divider"></div>
+          <div class="toggle-row">
+            <label for="showPath">แสดงเส้นวิถี</label>
+            <input type="checkbox" id="showPath" checked>
+          </div>
+          <div class="toggle-row">
+            <label for="showVectors">แสดงเวกเตอร์ความเร็ว</label>
+            <input type="checkbox" id="showVectors" checked>
+          </div>
+          <div class="toggle-row">
+            <label for="showHeight">แสดงจุดสูงสุด</label>
+            <input type="checkbox" id="showHeight" checked>
+          </div>
+          <div class="toggle-row">
+            <label for="showTarget">แสดงเป้าหมาย</label>
+            <input type="checkbox" id="showTarget" checked>
+          </div>
+          <div class="action-row">
+            <button class="btn primary" id="launch">▶ เริ่มขว้างวัตถุ</button>
+            <button class="btn" id="pause">Ⅱ หยุดชั่วคราว</button>
+            <button class="btn" id="reset">↺ เริ่มการทดลองใหม่</button>
+            <button class="btn" id="step">＋ เดินหน้าทีละขั้น</button>
+          </div>
+          <div class="progress-track"><div class="progress-bar" id="progress"></div></div>
+          <div class="playback-label"><span>เวลาจำลอง</span><span id="elapsed">0.00 s</span></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-heading">
+          <h2>สมการที่ใช้คำนวณ</h2>
+          <span class="eyebrow">PHYSICS MODEL</span>
+        </div>
+        <div class="section-body">
+          <div class="formula">
+            <div class="formula-title">01 / องค์ประกอบความเร็วต้น</div>
+            <div class="equation">vₓ = v₀ cos θ</div>
+            <div class="equation">vᵧ = v₀ sin θ</div>
+          </div>
+          <div class="formula">
+            <div class="formula-title">02 / ตำแหน่งของวัตถุ</div>
+            <div class="equation">x(t) = v₀ cos θ · t</div>
+            <div class="equation">y(t) = v₀ sin θ · t − ½gt²</div>
+          </div>
+          <div class="formula">
+            <div class="formula-title">03 / ระยะทางและความสูงสูงสุด</div>
+            <div class="equation">T = 2v₀ sin θ / g</div>
+            <div class="equation">R = v₀² sin(2θ) / g</div>
+            <div class="equation">H = v₀² sin² θ / (2g)</div>
+          </div>
+          <div class="formula">
+            <div class="formula-title">04 / แรงและโมเมนตัม</div>
+            <div class="equation">J = F Δt = Δp</div>
+            <div class="formula-note">แรงขว้าง F ในแบบจำลองนี้ใช้แสดงอิมพัลส์โดยประมาณ J = FΔt สำหรับมวล 1 kg ที่เริ่มจากหยุดนิ่ง ไม่ได้ใช้แทนความเร็วต้นที่ผู้เรียนกำหนด</div>
+          </div>
+          <div class="formula">
+            <div class="formula-title">ผลการทดลองเทียบเป้าหมาย</div>
+            <div class="equation" id="targetEquation">R = 40.77 m · เป้าหมาย = 30 m</div>
+            <div class="distance-status" id="targetStatus">วัตถุจะตกเลยเป้าหมาย</div>
+          </div>
+          <div class="formula-note">กำหนด g = 9.81 m/s² ไม่คิดแรงต้านอากาศ และพื้นยิงกับพื้นตกอยู่ระดับเดียวกัน</div>
+        </div>
+      </div>
+    </aside>
+  </main>
+  <div class="footer-note">
+    PROJECTILE LAB 3D · สื่อการเรียนรู้ฟิสิกส์เชิงโต้ตอบ<br>
+    แบบจำลองเพื่อการศึกษา ไม่ใช่เครื่องมือคาดการณ์การเคลื่อนที่จริงที่มีแรงต้านอากาศ
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(() => {
+  'use strict';
+
+  const $ = id => document.getElementById(id);
+  const G = 9.81;
+  const MASS = 1;
+  const PUSH_TIME = 0.2;
+  const MAX_TIME = 30;
+
+  let scene, camera, renderer, controls, clock;
+  let ball, launcher, trajectoryLine, groundGrid, targetGroup, peakMarker;
+  let velocityArrowX, velocityArrowY, forceArrow;
+  let animationId = 0;
+  let simTime = 0;
+  let playing = false;
+  let finished = false;
+  let lastFrame = 0;
+  let current = {};
+  let trajectoryPoints = [];
+  let pathMaterial;
+  let resizeObserver;
+
+  const defaults = { speed: 20, angle: 45, target: 30, force: 20 };
+
+  function readInputs() {
+    return {
+      speed: Number($('speed').value),
+      angle: Number($('angle').value),
+      target: Number($('target').value),
+      force: Number($('force').value)
+    };
+  }
+
+  function calculate(p) {
+    const rad = p.angle * Math.PI / 180;
+    const vx = p.speed * Math.cos(rad);
+    const vy = p.speed * Math.sin(rad);
+    const flight = 2 * vy / G;
+    const range = vx * flight;
+    const peakTime = vy / G;
+    const height = vy * vy / (2 * G);
+    const finalVx = vx;
+    const finalVy = -vy;
+    const finalSpeed = Math.hypot(finalVx, finalVy);
+    const impulse = p.force * PUSH_TIME;
+    const deltaV = impulse / MASS;
+    return {
+      ...p, rad, vx, vy, flight, range, peakTime, height,
+      finalSpeed, impulse, deltaV
+    };
+  }
+
+  function initScene() {
+    const host = $('scene');
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color('#111b32');
+    scene.fog = new THREE.Fog('#111b32', 100, 260);
+
+    camera = new THREE.PerspectiveCamera(42, 1, 0.1, 600);
+    camera.position.set(35, 27, 42);
+
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.1;
+    host.appendChild(renderer.domElement);
+
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.065;
+    controls.screenSpacePanning = true;
+    controls.minDistance = 9;
+    controls.maxDistance = 180;
+    controls.maxPolarAngle = Math.PI * 0.48;
+    controls.target.set(15, 5, 0);
+
+    scene.add(new THREE.HemisphereLight('#c8dcff', '#34405c', 1.55));
+
+    const ambient = new THREE.AmbientLight('#d8e5ff', 0.38);
+    scene.add(ambient);
+
+    const sun = new THREE.DirectionalLight('#ffffff', 2.4);
+    sun.position.set(-15, 38, 24);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(2048, 2048);
+    sun.shadow.camera.left = -100;
+    sun.shadow.camera.right = 100;
+    sun.shadow.camera.top = 100;
+    sun.shadow.camera.bottom = -100;
+    sun.shadow.bias = -0.0002;
+    scene.add(sun);
+
+    const fill = new THREE.DirectionalLight('#648aff', 0.8);
+    fill.position.set(35, 18, -25);
+    scene.add(fill);
+
+    createEnvironment();
+    createLauncher();
+    createBall();
+    createTrajectory();
+    createTarget();
+    createPeakMarker();
+    createVectors();
+
+    clock = new THREE.Clock();
+
+    resizeObserver = new ResizeObserver(resizeRenderer);
+    resizeObserver.observe(host);
+    resizeRenderer();
+
+    controls.update();
+    animate();
+  }
+
+  function createEnvironment() {
+    const floorGeo = new THREE.PlaneGeometry(500, 500);
+    const floorMat = new THREE.MeshStandardMaterial({
+      color: '#17243b', roughness: 0.86, metalness: 0.12
+    });
+    const floor = new THREE.Mesh(floorGeo, floorMat);
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -0.045;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    groundGrid = new THREE.GridHelper(240, 120, '#48648e', '#263853');
+    groundGrid.position.y = 0.01;
+    groundGrid.material.transparent = true;
+    groundGrid.material.opacity = 0.48;
+    scene.add(groundGrid);
+
+    const axisX = new THREE.ArrowHelper(
+      new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 0.04, 0),
+      12, 0x59e1e8, 1.3, 0.65
+    );
+    scene.add(axisX);
+
+    const axisY = new THREE.ArrowHelper(
+      new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 0),
+      12, 0x65e5b0, 1.3, 0.65
+    );
+    scene.add(axisY);
+
+    const axisZ = new THREE.ArrowHelper(
+      new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0.04, 0),
+      8, 0xbd91ff, 1.1, 0.55
+    );
+    scene.add(axisZ);
+
+    addPillar(0, 1.1, 0, 0.45, 2.2, 0.45, '#263c60');
+    addPillar(0, 2.25, 0, 0.65, 0.24, 0.65, '#5b83bd');
+
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(0.38, 0.055, 12, 40),
+      new THREE.MeshStandardMaterial({
+        color: '#59e1e8', metalness: 0.7, roughness: 0.28,
+        emissive: '#123d50', emissiveIntensity: 0.7
+      })
+    );
+    ring.rotation.y = Math.PI / 2;
+    ring.position.set(0, 2.65, 0);
+    scene.add(ring);
+
+    const axisMat = new THREE.MeshBasicMaterial({ color: '#d8e7ff' });
+    addAxisLabel('X', new THREE.Vector3(12.5, 0.6, 0), '#59e1e8');
+    addAxisLabel('Y', new THREE.Vector3(0.5, 12.7, 0), '#65e5b0');
+    addAxisLabel('Z', new THREE.Vector3(0, 0.6, 8.5), '#bd91ff');
+
+    for (let x = 0; x <= 100; x += 10) {
+      const tick = new THREE.Mesh(
+        new THREE.BoxGeometry(0.07, 0.025, 0.55),
+        axisMat
+      );
+      tick.position.set(x, 0.03, 0);
+      scene.add(tick);
+    }
+  }
+
+  function addPillar(x, y, z, w, h, d, color) {
+    const mesh = new THREE.Mesh(
+      new THREE.BoxGeometry(w, h, d),
+      new THREE.MeshStandardMaterial({
+        color, metalness: 0.45, roughness: 0.42
+      })
+    );
+    mesh.position.set(x, y, z);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    scene.add(mesh);
+    return mesh;
+  }
+
+  function addAxisLabel(text, pos, color) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, 128, 128);
+    ctx.font = 'bold 72px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = color;
+    ctx.fillText(text, 64, 64);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: texture, transparent: true, depthTest: false
+    }));
+    sprite.position.copy(pos);
+    sprite.scale.set(1.4, 1.4, 1);
+    scene.add(sprite);
+  }
+
+  function createLauncher() {
+    launcher = new THREE.Group();
+    const base = new THREE.Mesh(
+      new THREE.BoxGeometry(1.4, 0.28, 1.1),
+      new THREE.MeshStandardMaterial({
+        color: '#3a5277', metalness: 0.75, roughness: 0.27
+      })
+    );
+    base.position.set(0, 2.4, 0);
+    base.castShadow = true;
+    launcher.add(base);
+
+    const barrel = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.18, 0.25, 2.3, 32),
+      new THREE.MeshStandardMaterial({
+        color: '#92a7c7', metalness: 0.85, roughness: 0.2
+      })
+    );
+    barrel.rotation.z = -Math.PI / 2;
+    barrel.position.set(0.75, 2.65, 0);
+    barrel.castShadow = true;
+    launcher.add(barrel);
+
+    const muzzle = new THREE.Mesh(
+      new THREE.TorusGeometry(0.19, 0.045, 12, 32),
+      new THREE.MeshStandardMaterial({
+        color: '#59e1e8', metalness: 0.7, roughness: 0.25,
+        emissive: '#1d6775', emissiveIntensity: 0.7
+      })
+    );
+    muzzle.rotation.y = Math.PI / 2;
+    muzzle.position.set(1.9, 2.65, 0);
+    launcher.add(muzzle);
+
+    scene.add(launcher);
+  }
+
+  function createBall() {
+    const geometry = new THREE.SphereGeometry(0.36, 48, 32);
+    const material = new THREE.MeshStandardMaterial({
+      color: '#ffbd75',
+      metalness: 0.52,
+      roughness: 0.22,
+      emissive: '#9a4b12',
+      emissiveIntensity: 0.12
+    });
+    ball = new THREE.Mesh(geometry, material);
+    ball.castShadow = true;
+    ball.position.set(2.15, 2.65, 0);
+    scene.add(ball);
+
+    const halo = new THREE.Mesh(
+      new THREE.SphereGeometry(0.47, 32, 24),
+      new THREE.MeshBasicMaterial({
+        color: '#ffbd75', transparent: true, opacity: 0.11,
+        side: THREE.BackSide
+      })
+    );
+    ball.add(halo);
+  }
+
+  function createTrajectory() {
+    pathMaterial = new THREE.LineBasicMaterial({
+      color: '#59e1e8', transparent: true, opacity: 0.95
+    });
+    const geometry = new THREE.BufferGeometry();
+    trajectoryLine = new THREE.Line(geometry, pathMaterial);
+    trajectoryLine.frustumCulled = false;
+    scene.add(trajectoryLine);
+  }
+
+  function createTarget() {
+    targetGroup = new THREE.Group();
+
+    const disk = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.15, 1.15, 0.08, 64),
+      new THREE.MeshStandardMaterial({
+        color: '#bd91ff', metalness: 0.3, roughness: 0.38,
+        emissive: '#6c32a4', emissiveIntensity: 0.4
+      })
+    );
+    disk.position.y = 0.06;
+    disk.castShadow = true;
+    targetGroup.add(disk);
+
+    for (const radius of [0.42, 0.72, 0.98]) {
+      const ring = new THREE.Mesh(
+        new THREE.TorusGeometry(radius, 0.025, 8, 48),
+        new THREE.MeshBasicMaterial({ color: '#ead8ff' })
+      );
+      ring.rotation.x = Math.PI / 2;
+      ring.position.y = 0.12;
+      targetGroup.add(ring);
+    }
+
+    const pin = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.035, 0.035, 1.4, 12),
+      new THREE.MeshStandardMaterial({ color: '#bd91ff' })
+    );
+    pin.position.y = 0.75;
+    targetGroup.add(pin);
+    scene.add(targetGroup);
+  }
+
+  function createPeakMarker() {
+    peakMarker = new THREE.Group();
+
+    const sphere = new THREE.Mesh(
+      new THREE.SphereGeometry(0.21, 24, 20),
+      new THREE.MeshStandardMaterial({
+        color: '#65e5b0', emissive: '#1a8b62',
+        emissiveIntensity: 0.8, metalness: 0.2, roughness: 0.25
+      })
+    );
+    peakMarker.add(sphere);
+
+    const halo = new THREE.Mesh(
+      new THREE.TorusGeometry(0.37, 0.025, 10, 40),
+      new THREE.MeshBasicMaterial({ color: '#65e5b0' })
+    );
+    halo.rotation.x = Math.PI / 2;
+    peakMarker.add(halo);
+    scene.add(peakMarker);
+  }
+
+  function createVectors() {
+    velocityArrowX = new THREE.ArrowHelper(
+      new THREE.Vector3(1, 0, 0), new THREE.Vector3(), 1,
+      0xffbd75, 0.45, 0.22
+    );
+    velocityArrowY = new THREE.ArrowHelper(
+      new THREE.Vector3(0, 1, 0), new THREE.Vector3(), 1,
+      0xffbd75, 0.45, 0.22
+    );
+    forceArrow = new THREE.ArrowHelper(
+      new THREE.Vector3(1, 0, 0), new THREE.Vector3(), 1,
+      0xbd91ff, 0.45, 0.22
+    );
+    scene.add(velocityArrowX, velocityArrowY, forceArrow);
+  }
+
+  function setArrow(arrow, origin, direction, length, visible) {
+    arrow.visible = visible && length > 0.001;
+    if (!arrow.visible) return;
+    arrow.position.copy(origin);
+    arrow.setDirection(direction.clone().normalize());
+    arrow.setLength(Math.max(0.15, length), Math.min(0.55, length * 0.28), Math.min(0.25, length * 0.13));
+  }
+
+  function updateSceneModel() {
+    current = calculate(readInputs());
+
+    const p = current;
+    const launchY = 2.65;
+    const scale = 1;
+
+    trajectoryPoints = [];
+    const count = 180;
+    for (let i = 0; i <= count; i++) {
+      const t = p.flight * i / count;
+      trajectoryPoints.push(new THREE.Vector3(
+        p.vx * t,
+        launchY + p.vy * t - 0.5 * G * t * t,
+        0
+      ));
+    }
+
+    trajectoryLine.geometry.dispose();
+    trajectoryLine.geometry = new THREE.BufferGeometry().setFromPoints(trajectoryPoints);
+    trajectoryLine.visible = $('showPath').checked;
+
+    targetGroup.position.set(p.target, 0, 0);
+    targetGroup.visible = $('showTarget').checked;
+
+    peakMarker.position.set(p.vx * p.peakTime, launchY + p.height, 0);
+    peakMarker.visible = $('showHeight').checked;
+
+    $('rangeValue').textContent = p.range.toFixed(2);
+    $('heightValue').textContent = p.height.toFixed(2);
+    $('timeValue').textContent = p.flight.toFixed(2);
+    $('finalSpeedValue').textContent = p.finalSpeed.toFixed(2);
+
+    $('sceneVelocity').textContent = p.speed.toFixed(1) + ' m/s';
+    $('sceneAngle').textContent = p.angle + '°';
+
+    $('speedOut').textContent = p.speed.toFixed(1) + ' m/s';
+    $('angleOut').textContent = p.angle + '°';
+    $('targetOut').textContent = p.target + ' m';
+    $('forceOut').textContent = p.force + ' N';
+
+    $('targetEquation').textContent =
+      'R = ' + p.range.toFixed(2) + ' m · เป้าหมาย = ' + p.target + ' m';
+
+    const diff = p.range - p.target;
+    const status = Math.abs(diff) < 1.15
+      ? 'ระยะตกใกล้ตำแหน่งเป้าหมาย'
+      : diff > 0
+        ? 'วัตถุจะตกเลยเป้าหมาย ' + diff.toFixed(2) + ' m'
+        : 'วัตถุจะตกก่อนถึงเป้าหมาย ' + Math.abs(diff).toFixed(2) + ' m';
+
+    $('targetStatus').textContent = status;
+    $('targetStatus').style.color = Math.abs(diff) < 1.15 ? '#65e5b0' : '#ffbb70';
+
+    updateVectors(launchY);
+    resetPlayback();
+  }
+
+  function updateVectors(launchY) {
+    const p = current;
+    const pos = new THREE.Vector3(
+      p.vx * simTime,
+      launchY + p.vy * simTime - 0.5 * G * simTime * simTime,
+      0
+    );
+
+    const vxNow = p.vx;
+    const vyNow = p.vy - G * simTime;
+    const show = $('showVectors').checked && simTime < p.flight;
+
+    setArrow(
+      velocityArrowX, pos,
+      new THREE.Vector3(vxNow, 0, 0),
+      Math.min(4.2, vxNow * 0.17),
+      show
+    );
+    setArrow(
+      velocityArrowY, pos,
+      new THREE.Vector3(0, vyNow, 0),
+      Math.min(4.2, Math.abs(vyNow) * 0.17),
+      show && Math.abs(vyNow) > 0.05
+    );
+
+    const launchPos = new THREE.Vector3(0, launchY, 0);
+    const forceLength = Math.min(4.2, p.force * 0.045);
+    setArrow(
+      forceArrow, launchPos,
+      new THREE.Vector3(Math.cos(p.rad), Math.sin(p.rad), 0),
+      forceLength,
+      $('showVectors').checked
+    );
+  }
+
+  function resetPlayback() {
+    simTime = 0;
+    playing = false;
+    finished = false;
+    lastFrame = 0;
+    ball.position.set(2.15, 2.65, 0);
+    $('progress').style.width = '0%';
+    $('elapsed').textContent = '0.00 s';
+    $('simStatus').textContent = 'พร้อมทดลอง';
+    updateVectors(2.65);
+  }
+
+  function syncAndUpdate() {
+    if (!scene) return;
+    updateSceneModel();
+  }
+
+  function launch() {
+    if (finished) resetPlayback();
+    if (simTime >= current.flight) resetPlayback();
+    playing = true;
+    finished = false;
+    lastFrame = performance.now();
+    $('simStatus').textContent = 'กำลังเคลื่อนที่';
+  }
+
+  function pause() {
+    playing = false;
+    $('simStatus').textContent = finished ? 'สิ้นสุดการทดลอง' : 'หยุดชั่วคราว';
+  }
+
+  function stepForward() {
+    if (simTime >= current.flight) {
+      resetPlayback();
+    }
+    simTime = Math.min(current.flight, simTime + current.flight / 30);
+    updateBallPosition();
+    if (simTime >= current.flight) endFlight();
+  }
+
+  function endFlight() {
+    simTime = current.flight;
+    playing = false;
+    finished = true;
+    $('simStatus').textContent = 'สิ้นสุดการทดลอง';
+    updateBallPosition();
+  }
+
+  function updateBallPosition() {
+    const p = current;
+    const t = Math.min(simTime, p.flight);
+    ball.position.set(
+      p.vx * t,
+      2.65 + p.vy * t - 0.5 * G * t * t,
+      0
+    );
+
+    if (t >= p.flight) ball.position.y = 0.36;
+
+    $('elapsed').textContent = t.toFixed(2) + ' s';
+    $('progress').style.width = (100 * t / p.flight).toFixed(2) + '%';
+    updateVectors(2.65);
+  }
+
+  function resizeRenderer() {
+    if (!renderer || !camera) return;
+    const host = $('scene');
+    const w = Math.max(1, host.clientWidth);
+    const h = Math.max(1, host.clientHeight);
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+
+  function setCameraView(view) {
+    if (view === 'side') {
+      camera.position.set(20, 13, 58);
+      controls.target.set(20, 7, 0);
+    } else if (view === 'top') {
+      camera.position.set(20, 75, 0.01);
+      controls.target.set(20, 0, 0);
+    } else {
+      camera.position.set(35, 27, 42);
+      controls.target.set(15, 5, 0);
+    }
+    controls.update();
+  }
+
+  function animate(now) {
+    animationId = requestAnimationFrame(animate);
+    if (!renderer || !scene) return;
+
+    const timeNow = now || performance.now();
+    if (playing) {
+      if (!lastFrame) lastFrame = timeNow;
+      const dt = Math.min((timeNow - lastFrame) / 1000, 0.05);
+      simTime += dt * 1.0;
+      if (simTime >= current.flight) endFlight();
+      else updateBallPosition();
+      lastFrame = timeNow;
+    }
+
+    if (ball) {
+      ball.rotation.x += playing ? 0.015 : 0;
+      ball.rotation.z += playing ? 0.01 : 0;
+    }
+
+    controls.update();
+    renderer.render(scene, camera);
+  }
+
+  const info = {
+    velocity: {
+      title: 'ความเร็วต้น (Initial Velocity)',
+      text: 'วัตถุถูกปล่อยด้วยความเร็วต้น v₀ ซึ่งแยกเป็นองค์ประกอบแนวราบและแนวดิ่ง ความเร็วแนวราบคงที่ ส่วนความเร็วแนวดิ่งเปลี่ยนแปลงเพราะแรงโน้มถ่วง',
+      equation: 'vₓ = v₀ cos θ  ·  vᵧ = v₀ sin θ'
+    },
+    gravity: {
+      title: 'ความเร่งเนื่องจากแรงโน้มถ่วง',
+      text: 'หลังจากวัตถุหลุดจากแท่นยิง เราถือว่ามีแรงโน้มถ่วงเป็นแรงหลักเพียงแรงเดียว ความเร่งจึงมีทิศลงเสมอ แม้ในขณะที่วัตถุกำลังเคลื่อนที่ขึ้น',
+      equation: 'aₓ = 0  ·  aᵧ = −g = −9.81 m/s²'
+    },
+    trajectory: {
+      title: 'วิถีโพรเจกไทล์ (Parabolic Trajectory)',
+      text: 'เมื่อรวมการเคลื่อนที่แนวราบที่มีความเร็วคงที่กับการเคลื่อนที่แนวดิ่งที่มีความเร่งคงที่ จะได้วิถีเป็นเส้นพาราโบลา เมื่อไม่มีแรงต้านอากาศและจุดตกอยู่ระดับเดียวกับจุดยิง',
+      equation: 'y = x tan θ − gx² / (2v₀² cos² θ)'
+    }
+  };
+
+  document.querySelectorAll('[data-info]').forEach(button => {
+    button.addEventListener('click', () => {
+      document.querySelectorAll('[data-info]').forEach(b => b.classList.remove('active'));
+      button.classList.add('active');
+      const item = info[button.dataset.info];
+      $('infoCard').innerHTML = '';
+      const title = document.createElement('h3');
+      title.textContent = item.title;
+      const text = document.createElement('p');
+      text.textContent = item.text;
+      const equation = document.createElement('div');
+      equation.className = 'mini-equation';
+      equation.textContent = item.equation;
+      $('infoCard').append(title, text, equation);
+    });
+  });
+
+  ['speed', 'angle', 'target', 'force'].forEach(id => {
+    $(id).addEventListener('input', syncAndUpdate);
+  });
+
+  ['showPath', 'showVectors', 'showHeight', 'showTarget'].forEach(id => {
+    $(id).addEventListener('change', () => {
+      if (id === 'showPath') trajectoryLine.visible = $(id).checked;
+      if (id === 'showHeight') peakMarker.visible = $(id).checked;
+      if (id === 'showTarget') targetGroup.visible = $(id).checked;
+      if (id === 'showVectors') updateVectors(2.65);
+    });
+  });
+
+  $('launch').addEventListener('click', launch);
+  $('pause').addEventListener('click', pause);
+  $('reset').addEventListener('click', () => {
+    $('speed').value = defaults.speed;
+    $('angle').value = defaults.angle;
+    $('target').value = defaults.target;
+    $('force').value = defaults.force;
+    syncAndUpdate();
+  });
+  $('step').addEventListener('click', stepForward);
+  $('resetCamera').addEventListener('click', () => setCameraView('default'));
+  $('viewSide').addEventListener('click', () => setCameraView('side'));
+  $('viewTop').addEventListener('click', () => setCameraView('top'));
+
+  if (window.THREE && THREE.OrbitControls) {
+    initScene();
+    syncAndUpdate();
+  } else {
+    $('scene').innerHTML =
+      '<div style="padding:28px;color:#ffbb70;line-height:1.9">ไม่สามารถโหลด Three.js หรือ OrbitControls ได้ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต แล้วโหลดหน้านี้ใหม่</div>';
+    $('simStatus').textContent = 'โหลดไลบรารีไม่สำเร็จ';
+  }
+
+  window.addEventListener('beforeunload', () => {
+    cancelAnimationFrame(animationId);
+    if (resizeObserver) resizeObserver.disconnect();
+    if (renderer) renderer.dispose();
+  });
+})();
+</script>
+</body>
+</html>
